@@ -26,6 +26,8 @@
       kbWorksWhenHidden: true,
       forceKeysInPageWorld: false,
       antiResetPatch: true,
+      preservePitch: true,
+      draggableOverlay: true,
       disabledDomains: []
     },
 
@@ -155,6 +157,8 @@
       validated.kbWorksWhenHidden = Boolean(validated.kbWorksWhenHidden);
       validated.forceKeysInPageWorld = Boolean(validated.forceKeysInPageWorld);
       validated.antiResetPatch = Boolean(validated.antiResetPatch);
+      validated.preservePitch = Boolean(validated.preservePitch);
+      validated.draggableOverlay = Boolean(validated.draggableOverlay);
 
       // Validate disabledDomains
       if (!Array.isArray(validated.disabledDomains)) {

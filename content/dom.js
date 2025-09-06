@@ -64,7 +64,7 @@
                 position: relative;
               }
               
-              .vsc-overlay {
+                            .vsc-overlay {
                 background: rgba(0, 0, 0, 0.8);
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 6px;
@@ -73,9 +73,57 @@
                 align-items: center;
                 gap: 4px;
                 backdrop-filter: blur(4px);
-                transition: opacity 0.2s ease;
+                transition: opacity 0.2s ease, transform 0.1s ease;
                 min-width: 120px;
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                cursor: ;
+              }
+              
+              .vsc-overlay:hover {
+                background: rgba(0, 0, 0, 0.9);
+                border-color: rgba(255, 255, 255, 0.3);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+              }
+              
+              .vsc-overlay.dragging {
+                transform: scale(1.05);
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+                z-index: 1000000;
+              }
+              
+              .vsc-overlay.hidden {
+                opacity: 0.3;
+              }
+              
+              .vsc-drag-handle {
+                width: 4px;
+                height: 12px;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 2px;
+                margin-right: 4px;
+                cursor: ;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                padding: 1px 0;
+              }
+              
+              .vsc-drag-handle::before,
+              .vsc-drag-handle::after {
+                content: '';
+                width: 2px;
+                height: 2px;
+                background: rgba(255, 255, 255, 0.6);
+                border-radius: 50%;
+                margin: 0 auto;
+              }
+              
+              .vsc-drag-handle::before {
+                margin-bottom: 1px;
+              }
+              
+              .vsc-drag-handle::after {
+                margin-top: 1px;
               }
               
               .vsc-overlay.hidden {
@@ -122,7 +170,7 @@
               }
             </style>
             
-            <div class="vsc-overlay">
+            <div class="vsc-overlay"><div class="vsc-drag-handle"></div>
               <div class="vsc-speed-display">1.00×</div>
               <button class="vsc-button vsc-decrease" title="Decrease speed (S)">
                 <svg viewBox="0 0 10 10">
@@ -164,12 +212,14 @@
           }
         },
 
-        /**
+                /**
          * Setup event listeners
          */
-        setupEventListeners() {
+        async setupEventListeners() {
+          const settings = await window.VSC.state.loadSettings();
           const overlay = this.shadowRoot.querySelector('.vsc-overlay');
           const buttons = this.shadowRoot.querySelectorAll('.vsc-button');
+          const dragHandle = this.shadowRoot.querySelector('.vsc-drag-handle');
 
           // Button click handlers
           buttons.forEach(button => {
@@ -180,16 +230,30 @@
             });
           });
 
-          // Drag functionality
-          overlay.addEventListener('mousedown', (e) => {
+          // Drag functionality - make the entire overlay draggable
+          const startDragHandler = (e) => {
+            if (!settings.draggableOverlay) return;
+            // Don't start drag if clicking on buttons
             if (e.target.classList.contains('vsc-button')) return;
             this.startDrag(e);
-          });
+          };
 
+          overlay.addEventListener('mousedown', startDragHandler);
           overlay.addEventListener('touchstart', (e) => {
             if (e.target.classList.contains('vsc-button')) return;
             this.startDrag(e.touches[0]);
           });
+
+          // Add specific drag handle styling on hover
+          if (dragHandle) {
+            dragHandle.addEventListener('mouseenter', () => {
+              dragHandle.style.background = 'rgba(255, 255, 255, 0.5)';
+            });
+            
+            dragHandle.addEventListener('mouseleave', () => {
+              dragHandle.style.background = 'rgba(255, 255, 255, 0.3)';
+            });
+          }
 
           // Hover effects
           this.container.addEventListener('mouseenter', () => {
@@ -286,13 +350,23 @@
           window.VSC.media.updateInteraction(this.media);
         },
 
-        /**
+                /**
          * Start drag operation
          * @param {Event} e - Mouse or touch event
          */
         startDrag(e) {
           this.isDragging = true;
           this.dragStart = { x: e.clientX, y: e.clientY };
+          
+          // Add visual feedback
+          const overlay = this.shadowRoot.querySelector('.vsc-overlay');
+          if (overlay) {
+            overlay.classList.add('dragging');
+          }
+          
+          // Prevent text selection during drag
+          document.body.style.userSelect = 'none';
+          document.body.style.cursor = 'grabbing';
           
           const handleMove = (moveEvent) => {
             if (!this.isDragging) return;
@@ -309,6 +383,17 @@
 
           const handleEnd = () => {
             this.isDragging = false;
+            
+            // Remove visual feedback
+            const overlay = this.shadowRoot.querySelector('.vsc-overlay');
+            if (overlay) {
+              overlay.classList.remove('dragging');
+            }
+            
+            // Restore text selection
+            document.body.style.userSelect = '';
+            document.body.style.cursor = '';
+            
             document.removeEventListener('mousemove', handleMove);
             document.removeEventListener('mouseup', handleEnd);
             document.removeEventListener('touchmove', handleMove);

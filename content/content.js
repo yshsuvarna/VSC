@@ -174,7 +174,7 @@
       await this.applyStoredSpeed(media);
 
       // Set pitch correction
-      this.setupPitchCorrection(media);
+      await this.setupPitchCorrection(media);
 
       window.VSC.utils.debug('Media element setup complete:', media);
     },
@@ -250,22 +250,39 @@
       }
     },
 
-    /**
+        /**
      * Setup pitch correction for media element
      * @param {HTMLMediaElement} media - Media element
      */
-    setupPitchCorrection(media) {
+    async setupPitchCorrection(media) {
       try {
-        // Disable pitch preservation for more natural high-speed playback
+        const settings = await window.VSC.state.loadSettings();
+        const shouldPreservePitch = settings.preservePitch;
+        
+        // Set pitch preservation based on user preference
         if ('preservesPitch' in media) {
-          media.preservesPitch = false;
+          media.preservesPitch = shouldPreservePitch;
         } else if ('webkitPreservesPitch' in media) {
-          media.webkitPreservesPitch = false;
+          media.webkitPreservesPitch = shouldPreservePitch;
         } else if ('mozPreservesPitch' in media) {
-          media.mozPreservesPitch = false;
+          media.mozPreservesPitch = shouldPreservePitch;
         }
+        
+        window.VSC.utils.debug('Pitch preservation set to:', shouldPreservePitch, media);
       } catch (error) {
-        // Ignore errors - not all browsers support this
+        window.VSC.utils.error('Failed to setup pitch correction:', error);
+        // Fallback to default behavior (preserve pitch)
+        try {
+          if ('preservesPitch' in media) {
+            media.preservesPitch = true;
+          } else if ('webkitPreservesPitch' in media) {
+            media.webkitPreservesPitch = true;
+          } else if ('mozPreservesPitch' in media) {
+            media.mozPreservesPitch = true;
+          }
+        } catch (fallbackError) {
+          // Ignore errors - not all browsers support this
+        }
       }
     },
 

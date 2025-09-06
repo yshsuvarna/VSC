@@ -23,6 +23,8 @@
     kbWorksWhenHidden: true,
     forceKeysInPageWorld: false,
     antiResetPatch: true,
+    preservePitch: true,
+    draggableOverlay: true,
     disabledDomains: []
   };
 
@@ -150,6 +152,14 @@
     document.getElementById('force-keys').addEventListener('change', (e) => {
       currentSettings.forceKeysInPageWorld = e.target.checked;
       updateForceKeysWarning();
+    
+    document.getElementById('preserve-pitch').addEventListener('change', (e) => {
+      currentSettings.preservePitch = e.target.checked;
+    });
+    
+    document.getElementById('draggable-overlay').addEventListener('change', (e) => {
+      currentSettings.draggableOverlay = e.target.checked;
+    });
     });
     
     // Key inputs
@@ -189,6 +199,8 @@
     document.getElementById('kb-works-hidden').checked = currentSettings.kbWorksWhenHidden;
     document.getElementById('anti-reset-patch').checked = currentSettings.antiResetPatch;
     document.getElementById('force-keys').checked = currentSettings.forceKeysInPageWorld;
+    document.getElementById('preserve-pitch').checked = currentSettings.preservePitch;
+    document.getElementById('draggable-overlay').checked = currentSettings.draggableOverlay;
     
     // Key mappings
     Object.entries(currentSettings.keymap).forEach(([action, key]) => {

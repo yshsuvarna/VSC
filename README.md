@@ -35,7 +35,7 @@ A universal video/audio speed controller Chrome extension that works on any webs
 - **Anti-reset protection**: Prevents sites from overriding your speed choice
 - **Page-world injection**: Advanced mode for sites with aggressive key capture
 - **DRM-friendly**: Works within browser security limits (no DRM bypass)
-- **Pitch correction**: Natural-sounding audio at high speeds
+- **Pitch preservation**: Configurable pitch correction for natural-sounding audio at different speeds
 
 ## Installation
 

@@ -20,6 +20,8 @@ const DEFAULTS = {
   kbWorksWhenHidden: true,
   forceKeysInPageWorld: false,
   antiResetPatch: true,
+  preservePitch: true,
+  draggableOverlay: true,
   disabledDomains: []
 };
 
