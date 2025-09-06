@@ -135,6 +135,10 @@
           window.VSC.media.seekMedia(activeMedia, settings.seekSec);
           break;
 
+        case 'loop':
+          window.VSC.media.toggleLoop(activeMedia);
+          break;
+
         case 'toggle':
           const entry = window.VSC.media.getMediaEntry(activeMedia);
           if (entry && entry.overlay) {

@@ -14,6 +14,7 @@ const DEFAULTS = {
     reset: 'KeyR',
     back: 'KeyZ',
     fwd: 'KeyX',
+    loop: 'KeyL',
     toggle: 'KeyV'
   },
   includeAudio: true,

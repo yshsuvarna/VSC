@@ -83,7 +83,11 @@
         overlay,
         lastInteraction: 0,
         isPlaying: false,
-        isVisible: false
+        isVisible: false,
+        loopStart: null,
+        loopEnd: null,
+        isLooping: false,
+        loopCleanup: null
       });
 
       window.VSC.utils.debug('Media registered:', id, media);
@@ -96,8 +100,13 @@
     unregisterMedia(media) {
       if (media._vscId) {
         const entry = this._registry.get(media._vscId);
-        if (entry && entry.overlay) {
-          entry.overlay.destroy();
+        if (entry) {
+          if (entry.overlay) {
+            entry.overlay.destroy();
+          }
+          if (entry.loopCleanup) {
+            entry.loopCleanup();
+          }
         }
         this._registry.delete(media._vscId);
         delete media._vscId;
@@ -313,6 +322,147 @@
     },
 
     /**
+     * Set loop start point for media element
+     * @param {HTMLMediaElement} media - Media element
+     * @param {number} time - Time in seconds for loop start
+     */
+    setLoopStart(media, time) {
+      const entry = this.getMediaEntry(media);
+      if (entry) {
+        entry.loopStart = time;
+        entry.loopEnd = null; // Reset end point when setting new start
+        window.VSC.utils.debug('Loop start set:', time, media);
+      }
+    },
+
+    /**
+     * Set loop end point for media element
+     * @param {HTMLMediaElement} media - Media element
+     * @param {number} time - Time in seconds for loop end
+     */
+    setLoopEnd(media, time) {
+      const entry = this.getMediaEntry(media);
+      if (entry) {
+        entry.loopEnd = time;
+        window.VSC.utils.debug('Loop end set:', time, media);
+      }
+    },
+
+    /**
+     * Toggle loop mode for media element
+     * @param {HTMLMediaElement} media - Media element
+     */
+    toggleLoop(media) {
+      const entry = this.getMediaEntry(media);
+      if (!entry) return;
+
+      const currentTime = media.currentTime;
+      
+      if (entry.loopStart === null || entry.loopStart === undefined) {
+        // Set start point
+        this.setLoopStart(media, currentTime);
+        if (entry.overlay) {
+          entry.overlay.updateLoopDisplay('start', currentTime);
+        }
+      } else if (entry.loopEnd === null || entry.loopEnd === undefined) {
+        // Set end point
+        if (currentTime > entry.loopStart) {
+          this.setLoopEnd(media, currentTime);
+          this.startLoop(media);
+          if (entry.overlay) {
+            entry.overlay.updateLoopDisplay('active', entry.loopStart, entry.loopEnd);
+          }
+        } else {
+          // End time is before start time, reset and set new start
+          this.setLoopStart(media, currentTime);
+          if (entry.overlay) {
+            entry.overlay.updateLoopDisplay('start', currentTime);
+          }
+        }
+      } else {
+        // Loop is active, stop it and set new start point
+        this.stopLoop(media);
+        this.setLoopStart(media, currentTime);
+        if (entry.overlay) {
+          entry.overlay.updateLoopDisplay('start', currentTime);
+        }
+      }
+    },
+
+    /**
+     * Start loop playback for media element
+     * @param {HTMLMediaElement} media - Media element
+     */
+    startLoop(media) {
+      const entry = this.getMediaEntry(media);
+      if (!entry || entry.loopStart === null || entry.loopEnd === null) return;
+
+      // Remove existing loop listener
+      if (entry.loopCleanup) {
+        entry.loopCleanup();
+      }
+
+      const handleTimeUpdate = () => {
+        if (media.currentTime >= entry.loopEnd) {
+          media.currentTime = entry.loopStart;
+        }
+      };
+
+      // Add event listener
+      media.addEventListener('timeupdate', handleTimeUpdate);
+
+      // Store cleanup function
+      entry.loopCleanup = () => {
+        media.removeEventListener('timeupdate', handleTimeUpdate);
+      };
+
+      entry.isLooping = true;
+      window.VSC.utils.debug('Loop started:', entry.loopStart, 'to', entry.loopEnd, media);
+    },
+
+    /**
+     * Stop loop playback for media element
+     * @param {HTMLMediaElement} media - Media element
+     */
+    stopLoop(media) {
+      const entry = this.getMediaEntry(media);
+      if (!entry) return;
+
+      if (entry.loopCleanup) {
+        entry.loopCleanup();
+        entry.loopCleanup = null;
+      }
+
+      entry.isLooping = false;
+      entry.loopStart = null;
+      entry.loopEnd = null;
+
+      if (entry.overlay) {
+        entry.overlay.updateLoopDisplay('inactive');
+      }
+
+      window.VSC.utils.debug('Loop stopped:', media);
+    },
+
+    /**
+     * Get loop status for media element
+     * @param {HTMLMediaElement} media - Media element
+     * @returns {Object} Loop status object
+     */
+    getLoopStatus(media) {
+      const entry = this.getMediaEntry(media);
+      if (!entry) {
+        return { isLooping: false, start: null, end: null };
+      }
+
+      return {
+        isLooping: entry.isLooping || false,
+        start: entry.loopStart || null,
+        end: entry.loopEnd || null
+      };
+    },
+
+    /**
      * Clean up all media registrations
      */
     cleanup() {
@@ -322,6 +472,9 @@
         }
         if (entry.antiResetCleanup) {
           entry.antiResetCleanup();
+        }
+        if (entry.loopCleanup) {
+          entry.loopCleanup();
         }
       }
       this._registry.clear();

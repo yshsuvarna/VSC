@@ -64,7 +64,7 @@
                 position: relative;
               }
               
-                            .vsc-overlay {
+              .vsc-overlay {
                 background: rgba(0, 0, 0, 0.8);
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 border-radius: 6px;
@@ -138,6 +138,15 @@
                 font-variant-numeric: tabular-nums;
               }
               
+              .vsc-loop-display {
+                color: #ffd700;
+                font-weight: 500;
+                min-width: 30px;
+                text-align: center;
+                font-variant-numeric: tabular-nums;
+                font-size: 10px;
+              }
+              
               .vsc-button {
                 background: rgba(255, 255, 255, 0.1);
                 border: none;
@@ -168,10 +177,21 @@
                 height: 10px;
                 fill: currentColor;
               }
+              
+              .vsc-button.vsc-loop.active {
+                background: rgba(255, 215, 0, 0.3);
+                color: #ffd700;
+              }
+              
+              .vsc-button.vsc-loop.active:hover {
+                background: rgba(255, 215, 0, 0.4);
+              }
             </style>
             
-            <div class="vsc-overlay"><div class="vsc-drag-handle"></div>
+            <div class="vsc-overlay">
+              <div class="vsc-drag-handle"></div>
               <div class="vsc-speed-display">1.00×</div>
+              <div class="vsc-loop-display"></div>
               <button class="vsc-button vsc-decrease" title="Decrease speed (S)">
                 <svg viewBox="0 0 10 10">
                   <path d="M2 4h6v2H2z"/>
@@ -197,6 +217,11 @@
                   <path d="M5 2v1.5c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2H1c0 2.2 1.8 4 4 4s4-1.8 4-4-1.8-4-4-4V2L2 5l3 3V8z"/>
                 </svg>
               </button>
+              <button class="vsc-button vsc-loop" title="Toggle loop (L)">
+                <svg viewBox="0 0 10 10">
+                  <path d="M8 2c1.1 0 2 .9 2 2v2c0 .6-.4 1-1 1s-1-.4-1-1V4c0-.6-.4-1-1-1H2c-.6 0-1 .4-1 1v2c0 1.1.9 2 2 2h1c.6 0 1 .4 1 1s-.4 1-1 1H3c-2.2 0-4-1.8-4-4V4c0-2.2 1.8-4 4-4h5zm-5 6c-1.1 0-2-.9-2-2V4c0-.6.4-1 1-1s1 .4 1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V4c0-1.1-.9-2-2-2H7c-.6 0-1-.4-1-1s.4-1 1-1h1c2.2 0 4 1.8 4 4v2c0 2.2-1.8 4-4 4H3z"/>
+                </svg>
+              </button>
               <button class="vsc-button vsc-toggle" title="Toggle visibility (V)">
                 <svg viewBox="0 0 10 10">
                   <path d="M5 2c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4 1.8-4 4-4zm0 1.5c-1.4 0-2.5 1.1-2.5 2.5S3.6 8 5 8s2.5-1.1 2.5-2.5S6.4 3.5 5 3.5zm0 1c.8 0 1.5.7 1.5 1.5S5.8 7.5 5 7.5 3.5 6.8 3.5 6 4.2 4.5 5 4.5z"/>
@@ -212,7 +237,7 @@
           }
         },
 
-                /**
+        /**
          * Setup event listeners
          */
         async setupEventListeners() {
@@ -342,6 +367,8 @@
             window.VSC.media.seekMedia(this.media, -settings.seekSec);
           } else if (button.classList.contains('vsc-forward')) {
             window.VSC.media.seekMedia(this.media, settings.seekSec);
+          } else if (button.classList.contains('vsc-loop')) {
+            window.VSC.media.toggleLoop(this.media);
           } else if (button.classList.contains('vsc-toggle')) {
             this.toggleVisibility();
           }
@@ -350,7 +377,7 @@
           window.VSC.media.updateInteraction(this.media);
         },
 
-                /**
+        /**
          * Start drag operation
          * @param {Event} e - Mouse or touch event
          */
@@ -438,6 +465,41 @@
           if (display) {
             const currentSpeed = speed || this.media.playbackRate;
             display.textContent = `${window.VSC.utils.formatNumber(currentSpeed)}×`;
+          }
+        },
+
+        /**
+         * Update loop display
+         * @param {string} status - Loop status ('inactive', 'start', 'active')
+         * @param {number} start - Loop start time (optional)
+         * @param {number} end - Loop end time (optional)
+         */
+        updateLoopDisplay(status, start = null, end = null) {
+          if (!this.shadowRoot) return;
+          
+          const display = this.shadowRoot.querySelector('.vsc-loop-display');
+          const button = this.shadowRoot.querySelector('.vsc-loop');
+          
+          if (display) {
+            switch (status) {
+              case 'inactive':
+                display.textContent = '';
+                break;
+              case 'start':
+                display.textContent = `⏱${window.VSC.utils.formatTime(start)}`;
+                break;
+              case 'active':
+                display.textContent = `🔄${window.VSC.utils.formatTime(start)}-${window.VSC.utils.formatTime(end)}`;
+                break;
+            }
+          }
+          
+          if (button) {
+            if (status === 'active') {
+              button.classList.add('active');
+            } else {
+              button.classList.remove('active');
+            }
           }
         },
 

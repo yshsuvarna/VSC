@@ -58,6 +58,22 @@
     },
 
     /**
+     * Format time in seconds to MM:SS format
+     * @param {number} seconds - Time in seconds
+     * @returns {string} Formatted time string
+     */
+    formatTime(seconds) {
+      if (typeof seconds !== 'number' || !isFinite(seconds)) {
+        return '0:00';
+      }
+      
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = Math.floor(seconds % 60);
+      
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    },
+
+    /**
      * Check if element is visible in viewport
      * @param {Element} element - Element to check
      * @returns {boolean} True if element is visible
