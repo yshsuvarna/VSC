@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "VSC — Video Speed Controller",
+  "version": "1.0.0",
+  "description": "Universal video/audio speed controller with privacy-first design. Works on all HTML5 media including streaming sites.",
+  
+  "permissions": [
+    "storage"
+  ],
+  
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  
+  "background": {
+    "service_worker": "service_worker.js"
+  },
+  
+  "options_page": "options/options.html",
+  
+  "action": {
+    "default_title": "VSC — Video Speed Controller",
+    "default_popup": ""
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "content/utils.js",
+        "content/state.js", 
+        "content/media.js",
+        "content/dom.js",
+        "content/keys.js",
+        "content/content.js"
+      ],
+      "css": ["content/controller.css"],
+      "all_frames": true,
+      "match_about_blank": true,
+      "run_at": "document_idle"
+    }
+  ],
+  
+  "icons": {
+    "16": "assets/icon16.png",
+    "48": "assets/icon48.png", 
+    "128": "assets/icon128.png"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content/page-bridge.js",
+        "assets/*.svg"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
